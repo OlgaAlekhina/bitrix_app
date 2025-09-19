@@ -14,6 +14,11 @@ BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/i2imc8wqu35pmdem/'
 NOTIFY_USER_ID = '30'  # ID пользователя для уведомлений
 
 
+@app.route("/")
+def hello():
+    return "Timeweb Cloud + Flask = ❤️"
+
+
 @app.route('/bitrix-webhook', methods=['POST'])
 def handle_bitrix_webhook():
     """
@@ -102,6 +107,11 @@ def send_notification(deal_id):
         logger.error(f"Ошибка отправки уведомления: {str(e)}")
         return f'error: {str(e)}'
 
+@app.route('/hello-flask', methods=['GET'])
+def hello_flask():
+    return 'Hello Flask!'
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+
+if __name__ == "__main__":
+    port = 8080
+    app.run(debug=True,host='0.0.0.0',port=port)

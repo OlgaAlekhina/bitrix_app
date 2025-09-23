@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify
 import requests
-from datetime import datetime, timedelta
 import logging
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -16,14 +20,12 @@ NOTIFY_USER_ID = '30'  # ID пользователя для уведомлени
 
 @app.route("/")
 def hello():
-    return "Timeweb Cloud + Flask = ❤️"
+    return "Timeweb Cloud + Flask = ❤️❤️❤️"
 
 
 @app.route('/bitrix-webhook', methods=['POST'])
 def handle_bitrix_webhook():
-    """
-    Обработчик вебхука от Bitrix24
-    """
+    """ Обработчик вебхука от Bitrix24 """
     try:
         data = request.json
         logger.info(f"Получен вебхук: {data}")
@@ -90,7 +92,7 @@ def send_notification(deal_id):
         # 🚨 Клиент звонил на разные номера! Проверьте возможные дубликаты.
         # """
 
-        message = f"Создана сделка или лид № ID: {deal_id}"
+        message = f"Создана сделка или лид с ID: {deal_id}"
 
         requests.post(
             f'{BITRIX_WEBHOOK_URL}im.notify.system.add',

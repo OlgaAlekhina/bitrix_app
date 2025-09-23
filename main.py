@@ -1,3 +1,5 @@
+import sys
+
 from flask import Flask, request, jsonify
 import requests
 import logging
@@ -5,10 +7,10 @@ import logging
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    filename='app.log',
-    filemode='a',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]  # Только в консоль
 )
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -20,7 +22,7 @@ NOTIFY_USER_ID = '30'  # ID пользователя для уведомлени
 
 @app.route("/")
 def hello():
-    return "Timeweb Cloud + Flask = ❤️❤️❤️"
+    return "Timeweb Cloud + Flask = ❤️"
 
 
 @app.route('/bitrix-webhook', methods=['POST'])
@@ -34,15 +36,15 @@ def handle_bitrix_webhook():
         event = data.get('event', '')
 
         if event == 'ONCRMLEADADD':
-            # Обрабатываем создание сделки (лида)
-            deal_id = data['data']['FIELDS']['ID']
-            logger.info(f"Обрабатываем сделку ID: {deal_id}")
+            # Обрабатываем создание лида
+            lead_id = data['data']['FIELDS']['ID']
+            logger.info(f"Обрабатываем лид с ID: {lead_id}")
 
             # Проверяем повторные звонки
-            #result = check_repeat_calls_for_deal(deal_id)
+            #result = check_repeat_calls_for_deal(lead_id)
 
             # отправляем уведомление
-            result = send_notification(deal_id)
+            result = send_notification(lead_id)
 
             return jsonify({'status': 'success', 'send_message': result})
 
@@ -74,7 +76,7 @@ def get_deal_data(deal_id):
         logger.error(f"Ошибка запроса сделки: {str(e)}")
         return None
 
-def send_notification(deal_id):
+def send_notification(lead_id):
     """
     Отправляет уведомление в Bitrix24
     """
@@ -92,7 +94,7 @@ def send_notification(deal_id):
         # 🚨 Клиент звонил на разные номера! Проверьте возможные дубликаты.
         # """
 
-        message = f"Создана сделка или лид с ID: {deal_id}"
+        message = f"Создан лид с ID: {lead_id}"
 
         requests.post(
             f'{BITRIX_WEBHOOK_URL}im.notify.system.add',
@@ -102,7 +104,7 @@ def send_notification(deal_id):
             }
         )
 
-        logger.info(f"Уведомление отправлено для сделки {deal_id}")
+        logger.info(f"Уведомление отправлено для лида {lead_id}")
         return 'success'
 
     except Exception as e:

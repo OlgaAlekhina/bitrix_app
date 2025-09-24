@@ -28,8 +28,15 @@ def hello():
 @app.route('/bitrix-webhook', methods=['POST'])
 def handle_bitrix_webhook():
     """ Обработчик вебхука от Bitrix24 """
+    logger.info(f"Headers: {dict(request.headers)}")
+    logger.info(f"Raw body: {request.data.decode('utf-8')}")
+
     try:
-        data = request.get_json(force=True)
+        if request.is_json:
+            data = request.get_json()
+        else:
+            data = request.form.to_dict()
+
         logger.info(f"Получен вебхук: {data}")
 
         # Проверяем тип события

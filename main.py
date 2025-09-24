@@ -29,7 +29,7 @@ def hello():
 def handle_bitrix_webhook():
     """ Обработчик вебхука от Bitrix24 """
     try:
-        data = request.json
+        data = request.get_json(force=True)
         logger.info(f"Получен вебхук: {data}")
 
         # Проверяем тип события

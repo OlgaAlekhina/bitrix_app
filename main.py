@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Конфигурация
-BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/i2imc8wqu35pmdem/'
+BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/oaadvfrquwevbyho/'
 NOTIFY_USER_ID = '30'  # ID пользователя для уведомлений
 
 
@@ -103,7 +103,7 @@ def send_notification(lead_id):
 
         message = f"Создан лид с ID: {lead_id}"
 
-        requests.post(
+        response = requests.post(
             f'{BITRIX_WEBHOOK_URL}im.notify.system.add',
             json={
                 'USER_ID': NOTIFY_USER_ID,
@@ -111,6 +111,7 @@ def send_notification(lead_id):
             }
         )
 
+        logger.info(f"Ответ Bitrix24: {response.status_code} - {response.text}")
         logger.info(f"Уведомление отправлено для лида {lead_id}")
         return 'success'
 

@@ -44,7 +44,7 @@ def handle_bitrix_webhook():
 
         if event == 'ONCRMLEADADD':
             # Обрабатываем создание лида
-            lead_id = data['data']['FIELDS']['ID']
+            lead_id = data['data[FIELDS][ID]']
             logger.info(f"Обрабатываем лид с ID: {lead_id}")
 
             # Проверяем повторные звонки

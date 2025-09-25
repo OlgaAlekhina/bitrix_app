@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Конфигурация
-BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/oaadvfrquwevbyho/'
+BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/i2imc8wqu35pmdem/'
 NOTIFY_USER_ID = '30'  # ID пользователя для уведомлений
 
 
@@ -42,16 +42,16 @@ def handle_bitrix_webhook():
         # Проверяем тип события
         event = data.get('event', '')
 
-        if event == 'ONCRMLEADADD':
-            # Обрабатываем создание лида
+        if event in ('ONCRMLEADADD', 'ONCRMLEADUPDATE'):
+            # Обрабатываем создание или обновление лида
             lead_id = data['data[FIELDS][ID]']
             logger.info(f"Обрабатываем лид с ID: {lead_id}")
 
-            # Проверяем повторные звонки
-            #result = check_repeat_calls_for_deal(lead_id)
+            # Получаем данные лида
+            lead_data = get_lead_data(lead_id)
 
-            # отправляем уведомление
-            result = send_notification(lead_id)
+            # Отправляем системное уведомление мне в Битрикс
+            result = send_notification(lead_data)
 
             return jsonify({'status': 'success', 'send_message': result})
 
@@ -63,14 +63,14 @@ def handle_bitrix_webhook():
         logger.error(f"Ошибка обработки вебхука: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-def get_deal_data(deal_id):
+def get_lead_data(lead_id):
     """
-    Получает данные сделки по ID
+    Получает данные лида по ID
     """
     try:
         response = requests.post(
-            f'{BITRIX_WEBHOOK_URL}crm.deal.get',
-            json={'id': deal_id}
+            f'{BITRIX_WEBHOOK_URL}crm.lead.get',
+            json={'id': lead_id}
         )
 
         if response.status_code == 200:
@@ -83,11 +83,20 @@ def get_deal_data(deal_id):
         logger.error(f"Ошибка запроса сделки: {str(e)}")
         return None
 
-def send_notification(lead_id):
+def send_notification(lead_data):
     """
     Отправляет уведомление в Bitrix24
     """
     try:
+        id = lead_data.get('ID')
+        title = lead_data.get('TITLE')
+        name = lead_data.get('NAME')
+        second_name = lead_data.get('SECOND_NAME')
+        last_name = lead_data.get('LAST_NAME')
+        company = lead_data.get('COMPANY_TITLE')
+        returned = lead_data.get('IS_RETURN_CUSTOMER')
+        source = lead_data.get('SOURCE_DESCRIPTION')
+        comments = lead_data.get('COMMENTS')
         # message = f"""
         # 🔔 ПОВТОРНЫЙ ЗВОНОК НА ДРУГОЙ НОМЕР
         #
@@ -101,7 +110,18 @@ def send_notification(lead_id):
         # 🚨 Клиент звонил на разные номера! Проверьте возможные дубликаты.
         # """
 
-        message = f"Создан лид с ID: {lead_id}"
+        message = f""" 
+        Создан лид: 
+        ID - {id}
+        Название - {title if title else 'нет информации'}
+        Имя - {name if name else 'нет информации'}
+        Отчество - {second_name if second_name else 'нет информации'}
+        Фамилия - {last_name if last_name else 'нет информации'}
+        Компания - {company if company else 'нет информации'}
+        Повторный - {'НЕТ' if returned == 'N' else 'ДА'}
+        Источник - {source if source else 'нет информации'}
+        Комментарии - {comments if comments else 'нет информации'}
+        """
 
         response = requests.post(
             f'{BITRIX_WEBHOOK_URL}im.notify.system.add',
@@ -112,7 +132,7 @@ def send_notification(lead_id):
         )
 
         logger.info(f"Ответ Bitrix24: {response.status_code} - {response.text}")
-        logger.info(f"Уведомление отправлено для лида {lead_id}")
+        logger.info(f"Уведомление отправлено для лида {id}")
         return 'success'
 
     except Exception as e:

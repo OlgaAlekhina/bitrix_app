@@ -50,8 +50,10 @@ def handle_bitrix_webhook():
             # Получаем данные лида
             lead_data = get_lead_data(lead_id)
 
+            created = True if event == 'ONCRMLEADADD' else False
+
             # Отправляем системное уведомление мне в Битрикс
-            result = send_notification(lead_data)
+            result = send_notification(created, lead_data)
 
             return jsonify({'status': 'success', 'send_message': result})
 
@@ -83,11 +85,12 @@ def get_lead_data(lead_id):
         logger.error(f"Ошибка запроса сделки: {str(e)}")
         return None
 
-def send_notification(lead_data):
+def send_notification(created, lead_data):
     """
     Отправляет уведомление в Bitrix24
     """
     try:
+        action = 'Создан' if created else 'Изменен'
         id = lead_data.get('ID')
         title = lead_data.get('TITLE')
         name = lead_data.get('NAME')
@@ -97,6 +100,8 @@ def send_notification(lead_data):
         returned = lead_data.get('IS_RETURN_CUSTOMER')
         source = lead_data.get('SOURCE_DESCRIPTION')
         comments = lead_data.get('COMMENTS')
+        status = lead_data.get('STATUS_ID')
+        status_description = lead_data.get('STATUS_DESCRIPTION')
         # message = f"""
         # 🔔 ПОВТОРНЫЙ ЗВОНОК НА ДРУГОЙ НОМЕР
         #
@@ -111,14 +116,16 @@ def send_notification(lead_data):
         # """
 
         message = f""" 
-        Создан лид: 
+        {action} лид: 
         ID - {id}
         Название - {title if title else 'нет информации'}
         Имя - {name if name else 'нет информации'}
         Отчество - {second_name if second_name else 'нет информации'}
         Фамилия - {last_name if last_name else 'нет информации'}
         Компания - {company if company else 'нет информации'}
-        Повторный - {'НЕТ' if returned == 'N' else 'ДА'}
+        Повторный - {'нет' if returned == 'N' else 'да'}
+        Статус - {status if status else 'нет информации'}
+        Описание статуса - {status_description if status_description else 'нет информации'}
         Источник - {source if source else 'нет информации'}
         Комментарии - {comments if comments else 'нет информации'}
         """

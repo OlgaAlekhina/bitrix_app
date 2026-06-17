@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Конфигурация
-BITRIX_WEBHOOK_URL = 'https://veleres.bitrix24.ru/rest/30/i2imc8wqu35pmdem/'
-NOTIFY_USER_ID = '30'  # ID пользователя для уведомлений
+BITRIX_WEBHOOK_URL = ''
+NOTIFY_USER_ID = ''  # ID пользователя для уведомлений
 
 
 @app.route("/")
